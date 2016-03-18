@@ -1,0 +1,11 @@
+{
+  "mysql":{
+    "host"      :   "localhost",
+    "user"      :   "root",
+    "password"  :   "root",
+    "port"      :   "3306",
+    "database"  :   "tasks",
+    "serverId"  :   "101",
+    "minInterval":  "1000"
+  }
+}
