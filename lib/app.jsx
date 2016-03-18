@@ -1,14 +1,14 @@
 // Where should these go? Here for testing
 
-// Case 1
+// Usage 1
 tasksAll = new MysqlSubscription('tasks-mysql');
 
-// Case 2
+// Usage 2
 tasksHideCompleted = new MysqlSubscription('tasks-hide-completed', false);
 //tasksHideCompleted = new MysqlSubscription('tasks-hide-completed-params');
 
-// Case 3
-tasksByOwner = new MysqlSubscription('tasks-by-owner');
+// Usage 3
+//tasksByOwner = new MysqlSubscription('tasks-by-owner');
 
 
 // App component - represents the whole app
@@ -46,24 +46,24 @@ App = React.createClass({
 			I'm unclear as to where MysqlSubscription should go in a React app
 		*/
 		
-		// Case 2: 		
+		// Usage 2: 		
 		//var tasksHideCompleted = new MysqlSubscription('tasks-hide-completed', this.state.hideCompleted);
 		
-		// Case 3: 		
+		// Usage 3: 		
 		//var tasksByOwner = new MysqlSubscription('tasks-by-owner', Meteor.user().username);
 
 		return {
-			// Case 1: global tasksAll, which returns all rows. Works fine.
-			//tasks: tasksAll.reactive(),
-			//ready: tasksAll.ready(),
+			// Usage 1: global tasksAll, which returns all rows. Works fine.
+			tasks: tasksAll.reactive(),
+			ready: tasksAll.ready(),
 
-			// Case 2: limit rows by completed/checked flag.
+			// Usage 2: limit rows by completed/checked flag.
 			//tasksHideCompleted: tasksHideCompleted.reactive(),
 			//readyHideCompleted: tasksHideCompleted.ready(),
 			
-			// Case 3: global tasksAll, which returns all rows
-			tasksByOwner: tasksByOwner.reactive(),
-			readyByOwner: tasksByOwner.ready(),
+			// Usage 3: global tasksAll, which returns all rows
+			//tasksByOwner: tasksByOwner.reactive(),
+			//readyByOwner: tasksByOwner.ready(),
 
 			currentUser: Meteor.user()
 		};
@@ -100,6 +100,7 @@ App = React.createClass({
 		var hidden = !this.state.hideCompleted;
 		console.log(this.constructor.displayName, "toggleHideCompleted()", hidden);
 		
+		// ISSUE: This works once, then won't toggle
 		tasksHideCompleted.change([hidden]);
 		
 		this.setState({
@@ -110,15 +111,15 @@ App = React.createClass({
 	render() {
 		console.log(this.constructor.displayName, "render()", this.data);
 		
-		// Case 1
+		// Usage 1
 		var tasks = this.data.tasks;
 
-		// Case 2
+		// Usage 2
 		if (!tasks) {
 			tasks = this.data.tasksHideCompleted;
 		}
 
-		// Case 3
+		// Usage 3
 		if (!tasks) {
 			tasks = this.data.tasksByOwner;
 		}
