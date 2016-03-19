@@ -8,7 +8,7 @@ tasksHideCompleted = new MysqlSubscription('tasks-hide-completed', false);
 //tasksHideCompleted = new MysqlSubscription('tasks-hide-completed-params');
 
 // Usage 3
-//tasksByOwner = new MysqlSubscription('tasks-by-owner');
+tasksByOwner = new MysqlSubscription('tasks-by-owner');
 
 
 // App component - represents the whole app
@@ -58,18 +58,22 @@ App = React.createClass({
 			ready: tasksAll.ready(),
 
 			// Usage 2: limit rows by completed/checked flag.
-			//tasksHideCompleted: tasksHideCompleted.reactive(),
-			//readyHideCompleted: tasksHideCompleted.ready(),
+			tasksHideCompleted: tasksHideCompleted.reactive(),
+			readyHideCompleted: tasksHideCompleted.ready(),
 			
-			// Usage 3: global tasksAll, which returns all rows
-			//tasksByOwner: tasksByOwner.reactive(),
-			//readyByOwner: tasksByOwner.ready(),
+			// Usage 3: limit rows by meteor user
+			tasksByOwner: tasksByOwner.reactive(),
+			readyByOwner: tasksByOwner.ready(),
 
 			currentUser: Meteor.user()
 		};
 	},
 
 	renderTasks(tasks) {
+		if (!tasks) {
+			return "";
+		}
+		
 		// Get tasks from this.data.tasks
 		return tasks.map((task, index) => {
 			const currentUserId = this.data.currentUser && this.data.currentUser._id;
@@ -111,19 +115,45 @@ App = React.createClass({
 	},
 
 	render() {
-		console.log(this.constructor.displayName, "render()", this.data);
+		console.log(this.constructor.displayName, "render()", Meteor.userId(), this.data);
 		
 		// Usage 1
-		var tasks = this.data.tasks;
+		var tasksAll = "";
+		if (this.data.tasks) {
+			tasksAll = (
+				<div>
+					<h4>All Tasks</h4>
+					<ul>
+						{this.renderTasks(this.data.tasks)}
+					</ul>
+				</div>
+			);
+		}
 
 		// Usage 2
-		if (!tasks) {
-			tasks = this.data.tasksHideCompleted;
+		var tasksFilteredByCompleteness = "";
+		if (this.data.tasksHideCompleted) {
+			tasksFilteredByCompleteness = (
+				<div>
+					<h4>Filtered by Completeness</h4>
+					<ul>
+						{this.renderTasks(this.data.tasksHideCompleted)}
+					</ul>
+				</div>
+			);
 		}
 
 		// Usage 3
-		if (!tasks) {
-			tasks = this.data.tasksByOwner;
+		var tasksFilteredByOwner = "";
+		if (this.data.tasksByOwner) {
+			tasksFilteredByOwner = (
+				<div>
+					<h4>Filtered by Owner</h4>
+					<ul>
+						{this.renderTasks(this.data.tasksByOwner)}
+					</ul>
+				</div>
+			);
 		}
 		
 		return (
@@ -152,9 +182,9 @@ App = React.createClass({
 					}
 				</header>
  
-				<ul>
-					{this.renderTasks(tasks)}
-				</ul>
+				{tasksAll}
+				{tasksFilteredByCompleteness}
+				{tasksFilteredByOwner}
 			</div>
 		);
 	}
