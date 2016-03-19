@@ -101,7 +101,9 @@ App = React.createClass({
 		console.log(this.constructor.displayName, "toggleHideCompleted()", hidden);
 		
 		// ISSUE: This works once, then won't toggle
-		tasksHideCompleted.change([hidden]);
+		if (tasksHideCompleted) {
+			tasksHideCompleted.change([hidden]);
+		}
 		
 		this.setState({
 			hideCompleted: hidden
