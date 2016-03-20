@@ -23,9 +23,14 @@ App = React.createClass({
 		}
 	},
 
+	componentDidMount() {
+		if (Meteor.user() && tasksByOwner) {
+			tasksByOwner.change(Meteor.userId().valueOf());
+		}
+	},
+
 	// Loads items from the Tasks collection and puts them on this.data.tasks
 	getMeteorData() {
-		let query = {};
 
 		/*
 			If comment out subscriptions at top and uncomment either of the following lines, we get:
@@ -106,7 +111,7 @@ App = React.createClass({
 		
 		// ISSUE: This works once, then won't toggle
 		if (tasksHideCompleted) {
-			tasksHideCompleted.change([hidden]);
+			tasksHideCompleted.change(hidden);
 		}
 		
 		this.setState({
