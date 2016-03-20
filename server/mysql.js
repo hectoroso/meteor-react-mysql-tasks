@@ -11,16 +11,15 @@ process.on('SIGTERM', closeAndExit);
 // Close connections on exit (ctrl + c)
 process.on('SIGINT', closeAndExit);
 
-Meteor.publish('tasks-mysql', function(){
+Meteor.publish('tasks', function(owner, hide) {
+	var query = 'SELECT * FROM tasks WHERE (private != 1 OR owner = ' + liveDb.db.escape(owner) + ")";
+	
+	if (hide) {
+		query += ' AND checked != 1';
+	}
+	
 	return liveDb.select(
-		'SELECT * FROM tasks',
-		[ { table: 'tasks' } ]
-	);
-});
-
-Meteor.publish('tasks-by-owner', function(owner) {
-	return liveDb.select(
-		'SELECT * FROM tasks WHERE owner = ' + liveDb.db.escape(owner),
+		query,
 		[
 			{ 
 				table: 'tasks',
@@ -32,53 +31,14 @@ Meteor.publish('tasks-by-owner', function(owner) {
 	);
 });
 
-Meteor.publish('tasks-hide-completed', function(hide) {
-	console.log("mysql.js", "tasks-hide-completed()", hide);
-	var query = 'SELECT * FROM tasks';
-	
-	if (hide) {
-		query += ' WHERE checked != 1';
-	}
-	
-	return liveDb.select(
-		query,
-		[
-			{ 
-				table: 'tasks'
-			} 
-		]
-	);
-});
-
-Meteor.publish('tasks-hide-completed-params', function(hide) {
-	console.log("mysql.js", "tasks-hide-completed-params()", hide);
-	
-	var checked = hide ? 0 : 1;
-	
-	// This just toggles between completed and not at this point, 
-	// just trying to get queries to work before getting the logic down
-	return liveDb.select(
-		'SELECT * FROM tasks WHERE checked != ' + liveDb.db.escape(checked),
-		[
-			{ 
-				table: 'tasks' ,
-				condition: function(row, newRow) {
-					return row.checked === checked || (newRow && newRow.checked === checked);
-				}
-			} 
-		]
-	);
-});
-
 Meteor.methods({
 	addTaskMysql(text, username, owner) {
 		console.log("mysql.js", "addTaskMysql()", text, username, owner);
-		/*
 		// Make sure the user is logged in before inserting a task
 		if (! Meteor.userId()) {
 			throw new Meteor.Error("not-authorized");
 		}
-		*/
+		
 		liveDb.db.query('insert into tasks (text, username, owner, createdAt) values (?, ?, ?, ?)', [text, username, owner, new Date()]);
 	},
 	

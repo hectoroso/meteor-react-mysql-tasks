@@ -1,20 +1,5 @@
-// Where should these go? Here for testing
-
-// Usage 1
-tasksAll = new MysqlSubscription('tasks-mysql');
-
-// Usage 2
-tasksHideCompleted = new MysqlSubscription('tasks-hide-completed', false);
-//tasksHideCompleted = new MysqlSubscription('tasks-hide-completed-params');
-
-// Usage 3
-tasksByOwner = new MysqlSubscription('tasks-by-owner');
-
-
-// App component - represents the whole app
 App = React.createClass({
 	
-	// This mixin makes the getMeteorData method work
 	mixins: [ReactMeteorData],
 	
 	getInitialState() {
@@ -24,17 +9,22 @@ App = React.createClass({
 	},
 
 	componentDidMount() {
-		if (Meteor.user() && tasksByOwner) {
-			tasksByOwner.change(Meteor.userId().valueOf());
+		
+		// Is this the right place in the lifecycle to do this, 
+		// for when user has already logged in?
+		if (Meteor.user()) {
+			tasks.change(Meteor.userId().valueOf(), this.state.hideCompleted);
 		}
 	},
 
-	// Loads items from the Tasks collection and puts them on this.data.tasks
 	getMeteorData() {
 
+		// If I uncomment the following line, an exception results, see below. Does this belong in this method?
+		// If not, where do I pass parameters to the subscription? With Mongo it would be here.
+
+		//var tasks = new MysqlSubscription('tasks', Meteor.userId().valueOf(), this.state.hideCompleted);
+
 		/*
-			If comment out subscriptions at top and uncomment either of the following lines, we get:
-			
 			Exception from Tracker recompute function:
 			debug.js:41 Error: Subscription failed!
 			    at Array.MysqlSubscription (MysqlSubscription.js:40)
@@ -51,36 +41,20 @@ App = React.createClass({
 			I'm unclear as to where MysqlSubscription should go in a React app
 		*/
 		
-		// Usage 2: 		
-		//var tasksHideCompleted = new MysqlSubscription('tasks-hide-completed', this.state.hideCompleted);
-		
-		// Usage 3: 		
-		//var tasksByOwner = new MysqlSubscription('tasks-by-owner', Meteor.user().username);
-
 		return {
-			// Usage 1: global tasksAll, which returns all rows. Works fine.
-			tasks: tasksAll.reactive(),
-			ready: tasksAll.ready(),
-
-			// Usage 2: limit rows by completed/checked flag.
-			tasksHideCompleted: tasksHideCompleted.reactive(),
-			readyHideCompleted: tasksHideCompleted.ready(),
-			
-			// Usage 3: limit rows by meteor user
-			tasksByOwner: tasksByOwner.reactive(),
-			readyByOwner: tasksByOwner.ready(),
+			tasks: tasks.reactive(),
+			ready: tasks.ready(),
 
 			currentUser: Meteor.user()
 		};
 	},
 
 	renderTasks(tasks) {
-		if (!tasks) {
+		if (!this.data.tasks) {
 			return "";
 		}
 		
-		// Get tasks from this.data.tasks
-		return tasks.map((task, index) => {
+		return this.data.tasks.map((task, index) => {
 			const currentUserId = this.data.currentUser && this.data.currentUser._id;
 			const showPrivateButton = task.owner === currentUserId;
 
@@ -109,10 +83,7 @@ App = React.createClass({
 		var hidden = !this.state.hideCompleted;
 		console.log(this.constructor.displayName, "toggleHideCompleted()", hidden);
 		
-		// ISSUE: This works once, then won't toggle
-		if (tasksHideCompleted) {
-			tasksHideCompleted.change(hidden);
-		}
+		tasks.change(Meteor.userId().valueOf(), hidden);
 		
 		this.setState({
 			hideCompleted: hidden
@@ -121,45 +92,6 @@ App = React.createClass({
 
 	render() {
 		console.log(this.constructor.displayName, "render()", Meteor.userId(), this.data);
-		
-		// Usage 1
-		var tasksAll = "";
-		if (this.data.tasks) {
-			tasksAll = (
-				<div>
-					<h4>All Tasks</h4>
-					<ul>
-						{this.renderTasks(this.data.tasks)}
-					</ul>
-				</div>
-			);
-		}
-
-		// Usage 2
-		var tasksFilteredByCompleteness = "";
-		if (this.data.tasksHideCompleted) {
-			tasksFilteredByCompleteness = (
-				<div>
-					<h4>Filtered by Completeness</h4>
-					<ul>
-						{this.renderTasks(this.data.tasksHideCompleted)}
-					</ul>
-				</div>
-			);
-		}
-
-		// Usage 3
-		var tasksFilteredByOwner = "";
-		if (this.data.tasksByOwner) {
-			tasksFilteredByOwner = (
-				<div>
-					<h4>Filtered by Owner</h4>
-					<ul>
-						{this.renderTasks(this.data.tasksByOwner)}
-					</ul>
-				</div>
-			);
-		}
 		
 		return (
 			<div className="container">
@@ -187,9 +119,7 @@ App = React.createClass({
 					}
 				</header>
  
-				{tasksAll}
-				{tasksFilteredByCompleteness}
-				{tasksFilteredByOwner}
+				{this.renderTasks()}
 			</div>
 		);
 	}
